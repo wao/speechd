@@ -133,6 +133,17 @@ int module_load(void)
 	return 0;
 }
 
+static SPDVoice * generice_voices[2];
+static SPDVoice voice;
+
+static void init_voice(){
+    voice.language = "en";
+    voice.name = "FEMALE1";
+    voice.variant = "en_f";
+    generice_voices[0] = &voice;
+    generice_voices[1] = NULL;
+}
+
 int module_init(char **status_info)
 {
 	int ret;
@@ -142,6 +153,8 @@ int module_init(char **status_info)
 	DBG("GenericMaxChunkLength = %d\n", GenericMaxChunkLength);
 	DBG("GenericDelimiters = %s\n", GenericDelimiters);
 	DBG("GenericExecuteSynth = %s\n", GenericExecuteSynth);
+
+    init_voice();
 
 	generic_msg_language =
 	    (TGenericLanguage *) g_malloc(sizeof(TGenericLanguage));
@@ -171,7 +184,7 @@ int module_init(char **status_info)
 
 SPDVoice **module_list_voices(void)
 {
-	return NULL;
+	return &generice_voices;
 }
 
 int module_speak(gchar * data, size_t bytes, SPDMessageType msgtype)
@@ -184,7 +197,7 @@ int module_speak(gchar * data, size_t bytes, SPDMessageType msgtype)
 		DBG("Speaking when requested to write");
 		return 0;
 	}
-
+	UPDATE_STRING_PARAMETER(voice.name, generic_set_synthesis_voice);
 	UPDATE_STRING_PARAMETER(voice.language, generic_set_language);
 	UPDATE_PARAMETER(voice_type, generic_set_voice);
 	UPDATE_PARAMETER(punctuation_mode, generic_set_punct);
@@ -629,6 +642,11 @@ void generic_set_voice(SPDVoiceType voice)
 	if (generic_msg_voice_str == NULL) {
 		DBG("Invalid voice type specified or no voice available!");
 	}
+}
+
+void generic_set_synthesis_voice(char *name)
+{
+    generic_msg_voice_str = msg_settings.voice.name;
 }
 
 void generic_set_punct(SPDPunctuation punct)
